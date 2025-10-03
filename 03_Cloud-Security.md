@@ -1,182 +1,213 @@
-# Cloud Security — Notes
+## Cloud Security
 
-**Date:**  
-**Reader:** Dylan Nguyen  
-**Context/Goal:** (e.g., prep for Entergy interview, refresh AWS security basics)
+<img width="1378" height="823" alt="image" src="https://github.com/user-attachments/assets/4d80e3f4-a3f8-4f8b-8ee2-be771e5ad168" />
 
----
+The customer is responsible for security in the cloud, while AWS is responsible for the security of the cloud
 
-## 1) Cloud Security (Overview)
-**Key idea (1–2 lines):**  
-- 
+# What This IAM Setup Does (Markdown Notes)
 
-**My takeaways:**  
-- 
-
-**Questions:**  
-- 
+## What IAM Is (Quickly)
+**AWS Identity and Access Management (IAM)** lets you create identities (users/roles) and attach **policies** that define what those identities can and can’t do in your AWS account.
 
 ---
 
-## 2) AWS Shared Responsibility Model
-**What AWS secures (provider-owned):**  
-- 
+## What Your Procedure Accomplishes
+1. **Stop using the root user for daily work**
+   - Root = the “master key” to the entire account. Use it only to bootstrap, then lock it away.
 
-**What the customer secures (you):**  
-- 
+2. **Enable IAM access to billing**
+   - Turning on *“IAM User and Role Access to Billing”* lets non-root admins view/manage billing, budgets, and cost settings.
 
-**Borderline “shared” areas (clarify in interviews):**  
-- 
+3. **Create an IAM user named `Administrator` (console sign-in)**
+   - Dedicated username/password (add MFA). Managed by password policies and fully auditable via CloudTrail.
 
-**Example notes / mental model:**  
-- 
+4. **Create an IAM group named `Administrators` and attach `AdministratorAccess`**
+   - A group is a reusable permission container. Every member inherits the same permissions.
+   - **`AdministratorAccess`** (AWS managed) effectively grants full access to all AWS services and resources.
 
----
+5. **Add the `Administrator` user to the `Administrators` group**
+   - This assignment is what actually grants full admin privileges to the user.
 
-## 3) AWS IAM — Overview
-**Core concepts (in my words):**  
-- **Principal:**  
-- **Request:**  
-- **Authentication:**  
-- **Authorization:**  
-- **Actions/Operations:**  
-- **Resources:**  
-
-**Policies/Scopes to remember:**  
-- 
-
-**Gotchas / interview soundbites:**  
-- 
+6. **(Optional) Tags and CSV**
+   - **Tags** add metadata (owner, cost center, env) for governance/automation.
+   - The **CSV** contains sign-in details to store securely or share if provisioning for someone else.
 
 ---
 
-## 4) Create Administrator IAM User & Group (Console Walkthrough)
-> Use this as a checklist while practicing in a sandbox account.
-
-- [ ] Sign in as **root** only to bootstrap; lock away root creds after.  
-- [ ] **Enable billing access** for IAM users.  
-- [ ] Create IAM **user**: `Administrator` (console access; temp pw if desired).  
-- [ ] Create **group**: `Administrators`; attach **AdministratorAccess** managed policy.  
-- [ ] Add user → group; add **tags** (optional).  
-- [ ] Download `.csv` / send login instructions (optional).  
-- [ ] Turn on **MFA** for root and admins.  
-- [ ] Confirm least-privilege approach for day-to-day users/roles.
-
-**Notes from my run-through:**  
-- 
+## Why Use Groups (vs. Attaching Policies Directly to a User)?
+- **Scale & consistency:** One change to the group updates permissions for all members.
+- **Governance:** Easy audits—“who are our admins?” = members of `Administrators`.
+- **Best practice:** Prefer group- or role-based permissions over user-attached policies.
 
 ---
 
-## 5) IAM Console — Demo Notes
-**What I clicked / observed:**  
-- 
-
-**Policies/roles I inspected:**  
-- 
-
-**Open questions / follow-ups:**  
-- 
+## What the `Administrator` User Can Do Now
+- Create/modify/delete **any** AWS resource (EC2, S3, IAM, VPC, RDS, etc.).
+- Manage **security settings** (policies, roles, keys, MFA requirements).
+- Access **billing/cost** pages (because IAM billing access is enabled).
+- Configure **org-wide logging/monitoring** (CloudTrail, CloudWatch, GuardDuty).
+- Act as day-to-day **super-admin** without touching the root user.
 
 ---
 
-## 6) How IAM Works — Flow (My Words)
-**Flow I’ll explain in an interview:**  
-1) Principal sends a **request**  
-2) **Authentication** → creds/session valid?  
-3) **Authorization** → evaluate policies (allow/deny) using request context  
-4) If allowed → perform **actions** on **resources**  
-5) **Logging** records it (CloudTrail, etc.)
-
-**Edge cases / denials I noticed:**  
-- 
+## Security Implications & Best Practices
+- **MFA everywhere:** Enable MFA for root and the `Administrator` user.
+- **Least privilege for normal work:**
+  - Use a separate low-privilege user/role for daily tasks.
+  - Prefer **assume-role** escalation into an Admin **role** only when needed.
+- **Avoid long-lived access keys** for human users; prefer roles/temporary creds.
+- **Logging:** Ensure CloudTrail is enabled and writing to a secure, immutable S3 bucket (Object Lock/versioning).
+- **Break-glass mindset:** Treat `AdministratorAccess` like emergency power—protected and well-audited.
 
 ---
 
-## 7) Logging & Monitoring
-**Services to remember:**  
-- **CloudTrail** — API activity/event history; org trails?  
-- **IAM Access Analyzer** — finds external access paths to resources  
-- **CloudWatch (metrics/alarms/dashboards)** — real-time health + automation  
-- **CloudWatch Logs** — central log storage & search
+## Simple Mental Model
+- **Root** = master key (lock it up).
+- **Admin user + Admin group** = everyday super-admin (with MFA & auditing).
+- **Groups/Policies** = reusable permission sets.
+- **Billing toggle** = lets admins manage costs without using root.
 
-**What I’d enable first in a new account:**  
-- 
+<img width="709" height="653" alt="image" src="https://github.com/user-attachments/assets/4e295d74-b164-46b1-afe7-44824c0c4dce" />
 
-**Alert ideas / alarms worth setting:**  
-- 
+# IAM Core Concepts — Summary
 
----
-
-## 8) AWS Shield & GuardDuty
-**AWS Shield (Standard vs. Advanced):**  
-- 
-
-**Amazon GuardDuty (threat detection):**  
-- **Data sources (e.g., CloudTrail, VPC Flow, DNS):**  
-- **Example findings to practice interpreting:**  
-
-**Integration notes (alerts → response):**  
-- 
+## Quick Flow
+**Principal → Request → Authentication → Authorization → Actions/Operations → Resources**
 
 ---
 
-## 9) Security Best Practices (From the Deck)
-- **EBS Encryption** — data at rest (volumes/snapshots). Notes:  
-  - 
-- **Lock Down Root Credentials** — no access keys; MFA; break-glass only. Notes:  
-  - 
-- **Patch All Servers** — use **Systems Manager Patch Manager**. Notes:  
-  - 
+### Principal
+- **Who/what acts:** A person or application that makes requests to AWS.
+- **Best practice:** Don’t use the **root** user for daily work—use **IAM users** or **roles**.
 
-**My prioritized quick wins:**  
-1)  
-2)  
-3)  
+### Request
+- **What happens:** The principal uses the Console, API, or CLI to send a **request** to AWS (includes the action, target resource, and context like Region, time, source IP).
 
----
+### Authentication
+- **Proving identity:** The principal must **sign in** with valid credentials (password + MFA, access keys, or temporary creds via STS).
 
-## 10) AWS Infrastructure Security Controls
-**Docs/links I should skim:**  
-- `https://aws.amazon.com/compliance/data-center/controls/`
+### Authorization
+- **Permission check:** AWS evaluates **policies** that match the request context to decide **Allow** or **Deny** (explicit Deny overrides Allow).
 
-**What matters for interviews (bullet my summary):**  
-- 
+### Actions / Operations
+- **What you can do:** Service-defined operations (e.g., `s3:PutObject`, `ec2:StartInstances`) that the request is asking to perform.
+
+### Resources
+- **What is affected:** The specific AWS objects the action targets (e.g., an **S3 bucket**, an **EC2 instance**, an **IAM user**).
 
 ---
 
-## 11) Final Thoughts / “Thanks” Slide
-**3–5 headline takeaways I’ll remember:**  
-- 
+## One-Liner Example
+> An IAM role (principal) calls `s3:GetObject` (action) on `arn:aws:s3:::my-bucket/report.csv` (resource).  
+> AWS authenticates the role, evaluates attached policies (authorization), and—if allowed—returns the object.
 
-**Gaps to research next:**  
-- 
+## Logging & Monitoring — TL;DR
+
+- **AWS CloudTrail:** Records every API call (incl. console/API, IAM, STS) as events for auditing.
+- **IAM Access Analyzer:** Flags resources (e.g., S3 buckets, IAM roles) that are **public or shared externally**.
+- **Amazon CloudWatch:** Real-time metrics/monitoring; build dashboards and set **alarms** that notify or trigger actions at thresholds.
+- **CloudWatch Logs:** Central place to collect, store, and search logs from EC2, CloudTrail, and other sources.
+
+**Soundbite:** CloudTrail = audit trail, Access Analyzer = exposure checks, CloudWatch = metrics/alerts, CloudWatch Logs = log storage/search.
+
+## AWS Shield vs. Amazon GuardDuty — TL;DR
+
+- **AWS Shield**  
+  - Managed **DDoS protection** for apps on AWS.  
+  - **Always-on** detection with **automatic inline mitigations** to reduce downtime/latency.  
+  - Two tiers: **Standard** and **Advanced**.
+
+- **Amazon GuardDuty**  
+  - Continuous **threat detection** for malicious or unauthorized activity across your AWS environment (accounts, workloads, S3).  
+  - Think of it as “**antivirus for your AWS account**.”
+
+**Quick mental model:**  
+Shield = stop external **DDoS floods**; GuardDuty = **spot bad behavior** inside your AWS signals.
+
+## Security Best Practices — TL;DR
+
+### 1) EBS Encryption
+- Built-in encryption for **EBS volumes** (covers data at rest; can also encrypt boot volumes).
+- No need to build your own key mgmt stack—use AWS-managed KMS keys (or your own CMKs if required).
+
+### 2) Lock Down Root Account Credentials
+- Root has full, irreversible power → **don’t use it for daily work**.
+- Create an **IAM admin user/role** to manage the account instead.
+- **Enable MFA** on root and admin identities; avoid root access keys entirely.
+
+### 3) Keep All Servers Patched
+- Patch every instance—even private/non-internet-facing ones.
+- Use **AWS Systems Manager Patch Manager** to automate scheduling, approvals, and reporting.
 
 ---
 
-## Glossary (fill as you read)
-- **Principal:**  
-- **STS:**  
-- **Managed Policy vs. Inline Policy:**  
-- **Access Analyzer finding:**  
-- **DDoS (Layer 3/4 vs. 7):**  
+### Quick Actions Checklist
+- [ ] Turn on **default EBS encryption** for the account/Region.  
+- [ ] Remove/rotate any **root access keys**; enable **MFA on root**.  
+- [ ] Create an **Admin role**; use assume-role instead of long-lived admin users.  
+- [ ] Enforce **MFA** and strong password policies for all users.  
+- [ ] Set up **SSM Patch Manager** maintenance windows and baselines.  
 
----
+**Soundbite:** Encrypt storage, lock down root, and patch continuously—with automation.
 
-## Action Items
-- [ ] Enable/verify **org-level CloudTrail** and log archive bucket  
-- [ ] Create non-root **admin role**; enforce **MFA**  
-- [ ] Baseline **GuardDuty** + alert routing  
-- [ ] Review **EBS encryption** defaults & KMS key strategy  
-- [ ] Set up **Patch Manager** maintenance windows
 
----
 
-## Interview Snippets (prep answers)
-**Explain IAM to a non-technical audience:**  
-- 
 
-**Shared Responsibility in one sentence:**  
-- 
 
-**How would you harden a new AWS account day 1?:**  
-- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
